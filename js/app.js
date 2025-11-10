@@ -88,14 +88,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const token = localStorage.getItem('github_token');
         const tokenStatus = document.getElementById('tokenStatus');
 
+        // Check if Octokit is loaded from CDN
+        if (typeof window.Octokit === 'undefined') {
+            console.error('Octokit library not loaded. Please check your internet connection.');
+            return;
+        }
+
+        const OctokitRest = window.Octokit.Octokit || window.Octokit;
+
         if (token) {
-            octokit = new Octokit({ auth: token });
+            octokit = new OctokitRest({ auth: token });
             if (tokenStatus) {
                 tokenStatus.innerHTML = '<span class="badge bg-success">Token: Active</span>';
             }
         } else {
             // Use unauthenticated access (60 requests/hour limit)
-            octokit = new Octokit();
+            octokit = new OctokitRest();
             if (tokenStatus) {
                 tokenStatus.innerHTML = '<span class="badge bg-warning">No Token (Limited Rate)</span>';
             }
