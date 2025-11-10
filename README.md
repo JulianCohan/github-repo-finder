@@ -33,21 +33,19 @@ This project is designed to be a learning tool for new programmers interested in
 
 - **Frontend**: HTML, CSS, JavaScript
 - **Styling**: Bootstrap CSS framework with custom theme
-- **API Integration**: GitHub API via Octokit/REST
-- **Authentication**: Firebase Authentication
-- **Database**: Firebase Firestore
-- **Serverless Functions**: Netlify Functions
-- **Hosting**: Netlify
+- **API Integration**: GitHub API via Octokit/Core (browser)
+- **Hosting**: GitHub Pages (free static hosting)
 - **Syntax Highlighting**: highlight.js
+- **Code Search**: Client-side GitHub API integration
 
 ## How It Works
 
 1. **User Interface**: The frontend provides an intuitive search form with various filters.
-2. **API Request**: When a user submits a search, the request goes to our Netlify serverless function.
-3. **GitHub API**: The function uses Octokit to query GitHub's code search API.
+2. **Client-Side API**: When a user submits a search, the browser directly calls the GitHub API using Octokit.
+3. **GitHub API**: Octokit queries GitHub's code search API with optional authentication token.
 4. **Processing**: Results are processed, filtered, and ranked according to relevance and quality metrics.
-5. **Display**: Formatted results with syntax highlighting are returned to the user.
-6. **Save Function**: Authenticated users can save searches for later reference.
+5. **Display**: Formatted results with syntax highlighting are displayed to the user.
+6. **Token Management**: Users can optionally provide a GitHub Personal Access Token for higher rate limits.
 
 ## Learning Resources
 
@@ -69,12 +67,12 @@ This project serves as an excellent learning resource for:
 
 ## Implementation Details
 
-### Search Algorithm 
+### Search Algorithm
 
-The search algorithm in `src/github_code_finder.js` includes several sophisticated components:
+The search algorithm in `js/app.js` includes several sophisticated components:
 
 1. **Query Preparation**: Combines user query with filters
-2. **API Integration**: Connects to GitHub using Octokit
+2. **API Integration**: Connects to GitHub using Octokit (browser SDK)
 3. **Result Processing**: Extracts and formats relevant code snippets
 4. **Context Extraction**: Pulls code sections surrounding the matches
 5. **Quality Assessment**: Evaluates code quality using:
@@ -84,113 +82,97 @@ The search algorithm in `src/github_code_finder.js` includes several sophisticat
    - Documentation quality
 6. **Result Ranking**: Orders results by calculated match score
 
-### Serverless Function
+### Client-Side Architecture
 
-The serverless function in `netlify/functions/search-code.js` handles:
+All processing happens in the browser with no backend required:
 
-1. API request validation
-2. GitHub API authentication
-3. Error handling and rate limiting
-4. Response formatting
+1. Direct GitHub API calls from the browser
+2. Optional GitHub token stored securely in localStorage
+3. Rate limiting handled by GitHub's API
+4. No server-side code needed - perfect for GitHub Pages
 
 ## Setup Instructions
 
 ### Prerequisites
 
 - GitHub account
-- Netlify account
-- Firebase account
-- GitHub Personal Access Token
+- GitHub Personal Access Token (optional, but recommended for higher rate limits)
 
 ### Local Development
 
 1. Clone this repository:
-   ```
+   ```bash
    git clone https://github.com/yourusername/github-repo-finder.git
    cd github-repo-finder
    ```
 
-2. Install dependencies:
-   ```
-   npm install
+2. Open `index.html` in your browser:
+   ```bash
+   # Using Python 3
+   python -m http.server 8000
+
+   # Or using PHP
+   php -S localhost:8000
+
+   # Then visit http://localhost:8000
    ```
 
-3. Create environment variables:
-   Create a `.env` file in the root directory with the following variables:
-   ```
-   GITHUB_TOKEN=your_github_personal_access_token
-   ```
+3. (Optional) Add a GitHub Personal Access Token:
+   - Click the "API Token" button in the navbar
+   - Generate a token at [github.com/settings/tokens](https://github.com/settings/tokens)
+   - Select scope: `public_repo`
+   - Paste the token and save
 
-4. Set up Firebase:
-   - Create a new Firebase project at [firebase.google.com](https://firebase.google.com)
-   - Enable Authentication (Email/Password)
-   - Create a Firestore database
-   - Update your Firebase configuration in `public/js/firebase.js`
+### GitHub API Token (Optional but Recommended)
 
-5. Run the development server:
-   ```
-   npm run dev
-   ```
-
-### GitHub API Token
-
-**Important:** For the search functionality to work properly, you must set up a valid GitHub Personal Access Token:
+Adding a GitHub Personal Access Token increases your rate limit from 60 to 5,000 requests per hour:
 
 1. Go to [GitHub Settings > Developer Settings > Personal Access Tokens](https://github.com/settings/tokens)
 2. Click "Generate new token" (classic)
-3. Give it a name like "GitHub Repo Finder"
-4. Select the following scopes:
-   - `public_repo` (for public repository access)
-   - `read:packages` (for code search)
+3. Give it a name like "GitHub Code Finder"
+4. Select the scope: `public_repo`
 5. Copy the generated token
-6. Add it to your `.env` file:
-   ```
-   GITHUB_TOKEN=your_token_here
-   ```
+6. Click "API Token" button in the app and paste your token
 
-Without a valid token, GitHub API requests will have severe rate limits, and the search functionality may not work properly.
+Your token is stored locally in your browser's localStorage and is never sent to any server.
 
-### Deployment
+### Deployment to GitHub Pages
 
 1. Push your code to GitHub
 
-2. Connect your repository to Netlify:
-   - Go to [Netlify](https://app.netlify.com/)
-   - Click "New site from Git"
-   - Select your repository
-   - Configure build settings:
-     - Build command: `npm run build`
-     - Publish directory: `public`
-   - Set environment variables:
-     - `GITHUB_TOKEN` (your GitHub personal access token)
-   - Deploy!
+2. Enable GitHub Pages:
+   - Go to your repository settings
+   - Navigate to "Pages" section
+   - Under "Source", select the branch (usually `main` or `master`)
+   - Select root directory (`/`)
+   - Click "Save"
 
-3. Configure Firebase (if using authentication/saved searches):
-   - Create a new Firebase project
-   - Set up Firestore database
-   - Add your Firebase configuration to `public/js/firebase.js`
+3. Your site will be available at:
+   ```
+   https://yourusername.github.io/github-repo-finder/
+   ```
+
+4. (Optional) Add a custom domain:
+   - Go to repository settings > Pages
+   - Add your custom domain
+   - Update DNS settings at your domain provider
+
+That's it! No build process, no environment variables, no server configuration needed!
 
 ## Project Structure
 
 ```
-├── netlify/
-│   └── functions/
-│       └── search-code.js     # Serverless function handler
-├── public/
-│   ├── css/
-│   │   └── styles.css         # Custom styles
-│   ├── js/
-│   │   ├── app.js             # Main application logic
-│   │   ├── auth.js            # Authentication handling
-│   │   └── firebase.js        # Firebase configuration
-│   └── index.html             # Main application UI
-├── src/
-│   └── github_code_finder.js  # Core search implementation
-├── .env.example               # Example environment variables
-├── netlify.toml               # Netlify configuration
-├── package.json               # Project dependencies
-└── README.md                  # This documentation
+├── css/
+│   └── styles.css         # Custom styles
+├── js/
+│   └── app.js             # Main application logic with GitHub API integration
+├── index.html             # Main application UI
+├── .nojekyll              # Tells GitHub Pages not to use Jekyll
+├── package.json           # Project dependencies (for local dev only)
+└── README.md              # This documentation
 ```
+
+All code runs in the browser - no server-side components needed!
 
 ## Usage Examples
 
@@ -204,29 +186,32 @@ Without a valid token, GitHub API requests will have severe rate limits, and the
 ### Common Issues
 
 1. **GitHub API Rate Limiting**:
-   - Check if your GitHub token is properly configured
-   - GitHub has limits of 5,000 requests per hour with a token
-   - Without a token, you're limited to 60 requests per hour
+   - Without a token: 60 requests per hour
+   - With a token: 5,000 requests per hour
+   - Add a GitHub Personal Access Token via the "API Token" button
 
-2. **Firebase Authentication Issues**:
-   - Ensure Firebase is properly configured in `firebase.js`
-   - Check if you've enabled Email/Password authentication in Firebase console
+2. **CORS Errors** (when running locally):
+   - Use a local web server instead of opening the file directly
+   - Try: `python -m http.server 8000` or `php -S localhost:8000`
 
-3. **Netlify Function Errors**:
-   - Check browser console for detailed error messages
-   - Verify that your Netlify environment variables are correctly set
+3. **Search Not Working**:
+   - Check browser console for error messages
+   - Verify you haven't exceeded GitHub's rate limit
+   - Try adding a GitHub Personal Access Token
 
 ## Learning the Codebase
 
 For new programmers, here's a suggested order to explore the codebase:
 
-1. Start with `public/index.html` to understand the basic structure
-2. Explore `public/css/styles.css` to see how styling is applied
-3. Look at `public/js/app.js` to understand the frontend functionality
-4. Examine `netlify/functions/search-code.js` to see the serverless function
-5. Dive into `src/github_code_finder.js` for the core search algorithm
+1. Start with `index.html` to understand the basic structure and UI
+2. Explore `css/styles.css` to see how styling is applied
+3. Look at `js/app.js` to understand the complete application logic:
+   - GitHub API integration
+   - Search algorithm
+   - Result processing and ranking
+   - UI interactions
 
-Each file contains detailed comments to help you understand how everything works.
+The entire application is self-contained in these three files, making it easy to understand and modify!
 
 ## Contributing
 
